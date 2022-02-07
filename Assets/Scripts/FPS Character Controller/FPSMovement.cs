@@ -6,7 +6,7 @@ using UnityEngine;
 namespace TigerTail.FPSController
 {
     [RequireComponent(typeof(Rigidbody))]
-    [RequireComponent(typeof(Collider))]
+    [RequireComponent(typeof(CapsuleCollider))]
     [DisallowMultipleComponent]
     public class FPSMovement : MonoBehaviour
     {
@@ -37,6 +37,10 @@ namespace TigerTail.FPSController
         [Range(0.001f, 0.005f)]
         [SerializeField] private float airStrafeModifier = 0.003f;
 
+        [Tooltip("Distance below player required for them to be considered falling.")]
+        [Range(0.15f, 0.5f)]
+        [SerializeField] private float fallBuffer = 0.2f;
+
         private void Awake()
         {
             rb = GetComponent<Rigidbody>();
@@ -59,7 +63,7 @@ namespace TigerTail.FPSController
             if (rb.velocity.y >= GRACE_VALUE) // We're going up, definitely not touching the ground, uses a grace value just in case the physics engine doesn't quite set our velocity to 0 when grounded.
                 return;
 
-            if (Physics.Raycast(transform.position + Vector3.up * 0.5f, Vector3.down, out RaycastHit hit, 0.55f, ~0, QueryTriggerInteraction.UseGlobal))
+            if (Physics.Raycast(transform.position + Vector3.up * 0.5f, Vector3.down, out RaycastHit hit, 0.5f + fallBuffer, ~0, QueryTriggerInteraction.UseGlobal))
             {
                 ToggleState(State.Jumping | State.Falling, false);
             }
@@ -84,7 +88,7 @@ namespace TigerTail.FPSController
         /// <summary>Returns the velocity vector for a jump.</summary>
         private Vector3 HandleJumping()
         {
-            if (state.HasFlag(State.Jumping | State.Falling | State.Knockback | State.Immobilized))
+            if (HasAnyState(State.Jumping | State.Falling | State.Knockback | State.Immobilized))
                 return Vector3.zero;
 
             if (Input.GetKeyUp(KeyCode.Space))
@@ -99,7 +103,7 @@ namespace TigerTail.FPSController
         /// <summary>Returns the velocity vector for regular movement.</summary>
         private Vector3 HandleMovement()
         {
-            if (state.HasFlag(State.Immobilized))
+            if (HasAnyState(State.Immobilized))
                 return Vector3.zero;
 
             var moveVelocity = Vector3.zero;
