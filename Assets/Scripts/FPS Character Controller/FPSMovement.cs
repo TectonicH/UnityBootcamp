@@ -28,7 +28,9 @@ namespace TigerTail.FPSController
             /// <summary>The player has been immobilized and cannot move themselves.</summary>
             Immobilized = 1 << 3,
             /// <summary>The player has been knocked back by an external force.</summary>
-            Knockback = 1 << 4
+            Knockback = 1 << 4,
+            /// <summary>The player has been set to slide rather than have instant movement response during normal movement.</summary>
+            Sliding = 1 << 5
         }
         private State state;
 
@@ -44,12 +46,24 @@ namespace TigerTail.FPSController
         [Range(0.001f, 0.005f)]
         [SerializeField] private float airStrafeModifier = 0.003f;
 
+        [Tooltip("Percentage of movement speed to convert to sliding force while sliding.")]
+        [Range(0.002f, 0.004f)]
+        [SerializeField] private float slidingForceModifier = 0.0025f;
+
         [Tooltip("Distance below player required for them to be considered falling.\nIncrease this value if you find you can't jump while moving downhill slightly.")]
         [Range(0.01f, 0.2f)]
         [SerializeField] private float fallDistanceBuffer = 0.1f;
 
         /// <summary>Time the player last jumped at.</summary>
         private float lastJumpTime;
+
+        /// <summary>Whether the player is sliding across a surface or not.</summary>
+        /// <remarks>Set this to help the player slide down a slope or across an icy surface.</remarks>
+        public bool IsSliding
+        {
+            get { return state.HasFlag(State.Sliding); }
+            set { ToggleState(State.Sliding, value); }
+        }
 
         private void Awake()
         {
@@ -104,6 +118,8 @@ namespace TigerTail.FPSController
         {
             if (HasAnyState(State.Jumping | State.Falling | State.Knockback))
                 rb.AddForce(moveVelocity * airStrafeModifier + jumpVelocity, ForceMode.VelocityChange);
+            else if (state.HasFlag(State.Sliding))
+                rb.AddForce(moveVelocity * slidingForceModifier, ForceMode.VelocityChange);
             else if (state.HasFlag(State.Moving))
                 rb.velocity = moveVelocity;
             else
@@ -124,11 +140,6 @@ namespace TigerTail.FPSController
             }
 
             return Vector3.zero;
-        }
-
-        private void OnGUI()
-        {
-            GUI.Label(new Rect(10, 10, 500, 20), state.ToString());
         }
 
         /// <summary>Returns the velocity vector for regular movement.</summary>
