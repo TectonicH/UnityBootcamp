@@ -13,6 +13,9 @@ namespace TigerTail.FPSController
         /// <summary>Rigidbody attached to this player object.</summary>
         private Rigidbody rb;
 
+        /// <summary>Capsule Collider attached to this player object.</summary>
+        private CapsuleCollider cc;
+
         [Flags]
         public enum State
         {
@@ -28,7 +31,6 @@ namespace TigerTail.FPSController
         [Range(0.1f, 20f)]
         [SerializeField] private float moveSpeed = 10f;
 
-
         [Tooltip("Force of the player's jump.")]
         [Range(4f, 10f)]
         [SerializeField] private float jumpForce = 6f;
@@ -37,35 +39,49 @@ namespace TigerTail.FPSController
         [Range(0.001f, 0.005f)]
         [SerializeField] private float airStrafeModifier = 0.003f;
 
-        [Tooltip("Distance below player required for them to be considered falling.")]
-        [Range(0.15f, 0.5f)]
-        [SerializeField] private float fallBuffer = 0.2f;
+        [Tooltip("Distance below player required for them to be considered falling.\nIncrease this value if you find you can't jump while moving downhill slightly.")]
+        [Range(0.01f, 0.2f)]
+        [SerializeField] private float fallDistanceBuffer = 0.1f;
+
+        /// <summary>Time the player last jumped at.</summary>
+        private float lastJumpTime;
 
         private void Awake()
         {
+            cc = GetComponent<CapsuleCollider>();
             rb = GetComponent<Rigidbody>();
         }
 
         private void Update()
         {
-            CheckIfTouchingGround();
-
             var moveVelocity = HandleMovement();
             var jumpVelocity = HandleJumping();
 
             HandleMovementByState(moveVelocity, jumpVelocity);
         }
 
+        // Fixed Update was used for this as it is Physics code and all Unity physics runs on this loop.
+        // The update rate of FixedUpdate is set in the Unity Player settings under Time. (Set to 200Hz for this project)
+        private void FixedUpdate()
+        {
+            CheckIfTouchingGround(); 
+        }
+
         /// <summary>Checks if the player is currently touching the ground and sets their state accordingly.</summary>
         private void CheckIfTouchingGround()
         {
-            const float GRACE_VALUE = -0.05f;
-            if (rb.velocity.y >= GRACE_VALUE) // We're going up, definitely not touching the ground, uses a grace value just in case the physics engine doesn't quite set our velocity to 0 when grounded.
+            const float JUMP_GRACE_TIME = 0.35f;
+            if (state.HasFlag(State.Jumping) && Time.time - JUMP_GRACE_TIME < lastJumpTime) // We just started a jump, don't immediately ground us.
                 return;
 
-            if (Physics.Raycast(transform.position + Vector3.up * 0.5f, Vector3.down, out RaycastHit hit, 0.5f + fallBuffer, ~0, QueryTriggerInteraction.UseGlobal))
+            var fallingRayDistance = cc.height / 2 + fallDistanceBuffer;
+
+            if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, fallingRayDistance))
             {
                 ToggleState(State.Jumping | State.Falling, false);
+                var adjustedPosition = transform.position;
+                adjustedPosition.y = hit.point.y + cc.height / 2;
+                transform.position = adjustedPosition;
             }
             else
             {
@@ -94,18 +110,21 @@ namespace TigerTail.FPSController
             if (Input.GetKeyUp(KeyCode.Space))
             {
                 ToggleState(State.Jumping, true);
+                lastJumpTime = Time.time;
                 return Vector3.up * jumpForce;
             }
 
             return Vector3.zero;
         }
 
+        private void OnGUI()
+        {
+            GUI.Label(new Rect(10, 10, 500, 20), state.ToString());
+        }
+
         /// <summary>Returns the velocity vector for regular movement.</summary>
         private Vector3 HandleMovement()
         {
-            if (HasAnyState(State.Immobilized))
-                return Vector3.zero;
-
             var moveVelocity = Vector3.zero;
 
             if (Input.GetKey(KeyCode.W))
@@ -126,6 +145,9 @@ namespace TigerTail.FPSController
                 moveVelocity += transform.right;
             }
 
+            if (HasAnyState(State.Immobilized))
+                moveVelocity = Vector3.zero;
+
             ToggleState(State.Moving, moveVelocity != Vector3.zero); // We're moving if we have a non-zero velocity.
 
             // Going forward/back and left/right at the same time creates a right triangle with magnitude sqrt(2).
@@ -133,6 +155,13 @@ namespace TigerTail.FPSController
             moveVelocity = moveVelocity.normalized;
 
             return moveVelocity * moveSpeed;
+        }
+
+        /// <summary>Adds knockback to the player.</summary>
+        public void AddKnockback(Vector3 knockbackVelocity)
+        {
+            state |= State.Knockback;
+            rb.AddForce(knockbackVelocity);
         }
 
         /// <summary>Sets a state flag based on whether or not it should be <paramref name="active"/>.</summary>
