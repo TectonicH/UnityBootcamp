@@ -19,10 +19,15 @@ namespace TigerTail.FPSController
         [Flags]
         public enum State
         {
+            /// <summary>This player is moving via their own inputs.</summary>
             Moving = 1,
+            /// <summary>The player is currently jumping.</summary>
             Jumping = 1 << 1,
+            /// <summary>The player is currently falling.</summary>
             Falling = 1 << 2,
+            /// <summary>The player has been immobilized and cannot move themselves.</summary>
             Immobilized = 1 << 3,
+            /// <summary>The player has been knocked back by an external force.</summary>
             Knockback = 1 << 4
         }
         private State state;
@@ -61,7 +66,7 @@ namespace TigerTail.FPSController
         }
 
         // Fixed Update was used for this as it is Physics code and all Unity physics runs on this loop.
-        // The update rate of FixedUpdate is set in the Unity Player settings under Time. (Set to 200Hz for this project)
+        // The update rate of FixedUpdate is set in the Unity Player Settings under Time. (Set to 200Hz for this project)
         private void FixedUpdate()
         {
             CheckIfTouchingGround(); 
@@ -74,6 +79,10 @@ namespace TigerTail.FPSController
             if (state.HasFlag(State.Jumping) && Time.time - JUMP_GRACE_TIME < lastJumpTime) // We just started a jump, don't immediately ground us.
                 return;
 
+            // Our sphere collider extends above and below this object's actual position in space by half of its height.
+            // This means the floor is half the height of the capsule collider below us.
+            // To check if we're touching the ground we need to see if a ray fired downwards that's half of our height touches the floor.
+            // A small buffer is added because this ray can be slightly off the floor if we're on a slope even though our collider is actually making contact.
             var fallingRayDistance = cc.height / 2 + fallDistanceBuffer;
 
             if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, fallingRayDistance))
