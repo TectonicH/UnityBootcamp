@@ -57,6 +57,8 @@ namespace TigerTail.FPSController
         /// <summary>Time the player last jumped at.</summary>
         private float lastJumpTime;
 
+        public Vector3 ExternalVelocity { get; set; }
+
         /// <summary>Whether the player is sliding across a surface or not.</summary>
         /// <remarks>Set this to help the player slide down a slope or across an icy surface.</remarks>
         public bool IsSliding
@@ -121,9 +123,9 @@ namespace TigerTail.FPSController
             else if (state.HasFlag(State.Sliding))
                 rb.AddForce(moveVelocity * slidingForceModifier, ForceMode.VelocityChange);
             else if (state.HasFlag(State.Moving))
-                rb.velocity = moveVelocity;
+                rb.velocity = moveVelocity + ExternalVelocity;
             else
-                rb.velocity = Vector3.zero;
+                rb.velocity = ExternalVelocity;
         }
 
         /// <summary>Returns the velocity vector for a jump.</summary>
@@ -132,7 +134,7 @@ namespace TigerTail.FPSController
             if (HasAnyState(State.Jumping | State.Falling | State.Knockback | State.Immobilized))
                 return Vector3.zero;
 
-            if (Input.GetKeyUp(KeyCode.Space))
+            if (Input.GetKeyDown(KeyCode.Space))
             {
                 ToggleState(State.Jumping, true);
                 lastJumpTime = Time.time;

@@ -106,7 +106,7 @@ Rigidbody:
   m_GameObject: {fileID: 5528824726553203125}
   serializedVersion: 2
   m_Mass: 0.5
-  m_Drag: 0.2
+  m_Drag: 0.1
   m_AngularDrag: 2
   m_UseGravity: 1
   m_IsKinematic: 0
@@ -126,3 +126,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   impactEffectPrefab: {fileID: 1523363671330501453, guid: de70297b7e5e7684db5bb448645e7c22, type: 3}
+  impactDamage: 0
