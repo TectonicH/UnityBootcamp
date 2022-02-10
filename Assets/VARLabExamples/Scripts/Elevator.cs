@@ -60,7 +60,7 @@ namespace TigerTail
         [Tooltip("Method used to activate the elevator.")]
         [SerializeField] private Activator activator = Activator.Player;
 
-        [Tooltip("Method used to activate the elevator.")]
+        [Tooltip("What the elevator does when all of its activators fall off.")]
         [SerializeField] private Deactivation deactivateMode = Deactivation.Return;
 
         /// <summary>If the elevator is currently moving.</summary>
