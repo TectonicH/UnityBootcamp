@@ -280,7 +280,7 @@ namespace TigerTail
             else
                 nextIndex = destinationIndex + 1;
 
-            destinationIndex = nextIndex % destinations.Length;
+            destinationIndex = Helpers.Modulo(nextIndex, destinations.Length);
         }
 
         /// <summary>Gets the next index to use with the destinations array, reversing through the array when it reaches the start/finish.</summary>
