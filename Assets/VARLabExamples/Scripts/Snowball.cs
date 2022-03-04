@@ -33,11 +33,26 @@ namespace TigerTail
         /// <summary>Current size of the snowball.</summary>
         private float currentSize;
 
+        public AudioSource explode;
+
+        private float speed = 1f;
+
+        //private float speedMultiplier = 0.5f;
+
         [Tooltip("Particle system for the mist effect below the snowball.")]
         [SerializeField] private ParticleSystem ps;
 
         [Tooltip("Number of rotations needed to double the snowball's size.")]
         [SerializeField] private float rotationsToDoubleInSize = 15f;
+
+        [SerializeField] private GameObject explosionCartoon;
+
+        [SerializeField] private MeshRenderer snowballMesh;
+
+        private void Start()
+        {
+            
+        }
 
         private void Awake()
         {
@@ -79,6 +94,25 @@ namespace TigerTail
             currentSize = 1 + completedRotations / rotationsToDoubleInSize;
 
             transform.localScale = Vector3.one * currentSize;
+        }
+
+        private void OnCollisionEnter(Collision collision)
+        {
+            if (collision.gameObject.tag== "ThrowSB")
+            {
+                explosionCartoon.SetActive(true);
+                snowballMesh.enabled = false;
+                Instantiate(gameObject);
+                explode.Play();
+                StartCoroutine(StopExplosion());
+            }
+        }
+
+        IEnumerator StopExplosion() 
+        {
+            yield return new WaitForSeconds(1f);
+            //explosionCartoon.SetActive(false);
+            Destroy(gameObject);
         }
     }
 }

@@ -11,6 +11,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
+using UnityEngine.SceneManagement;
 
 namespace TigerTail
 {
@@ -21,6 +23,8 @@ namespace TigerTail
     {
         [Tooltip("Prefab for the particle effect to play when this snowball impacts after throwing.")]
         [SerializeField] private GameObject impactEffectPrefab;
+        [SerializeField] public TextMeshProUGUI countText;
+        private int count;
 
         /// <summary>Rigidbody attached to this object.</summary>
         private Rigidbody rb;
@@ -44,18 +48,32 @@ namespace TigerTail
             rb = GetComponent<Rigidbody>();
         }
 
+        void Start()
+        {
+            gameObject.tag = "ThrowSB";
+            count = 0;
+            SetCountText();
+        }
+
         private void OnCollisionEnter(Collision collision)
         {
             switch (state)
             {
                 case State.Pickup:
-                    Pickup(collision.gameObject);
+                    Pickup(collision.gameObject);          
                     break;
 
                 case State.Thrown:
                     Impact(collision.gameObject);
                     break;
             }
+
+            if (collision.collider.CompareTag("TSnowball") /*&& state == State.Thrown*/)
+            {
+                count = count + 1;
+                SetCountText();
+            }
+
         }
 
         /// <summary>Handles impact visuals and damage dealing..</summary>
@@ -97,5 +115,30 @@ namespace TigerTail
             transform.SetParent(point);
             transform.localPosition = Vector3.zero;
         }
+
+        void SetCountText()
+        {
+            if(count < 10)
+            {
+                countText.text = "Count: " + count.ToString();
+            }
+           else
+            {
+                SceneManager.LoadScene("Game Over");
+            }
+
+
+        }
+
+        
+    //    private void OnCollisionEnter(Collider other)
+    //    {
+    //        //if (other.gameObject.CompareTag("TSnowball"))
+    //        //{
+    //        //    count = count + 1;
+
+    //        //    SetCountText();
+    //        //}
+    //    }
     }
 }

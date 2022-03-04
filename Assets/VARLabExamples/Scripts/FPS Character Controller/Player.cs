@@ -9,6 +9,7 @@
 
 using UnityEngine;
 
+
 namespace TigerTail.FPSController
 {
     [DisallowMultipleComponent]
@@ -16,13 +17,20 @@ namespace TigerTail.FPSController
     {
         [Tooltip("The transform pickups should be parented to for holding/throwing.")]
         [SerializeField] private Transform pickupLocation;
+        
+
+        //[SerializeField] private GameObject purpleExplosion;
+
+        //[SerializeField] private MeshRenderer snowmanMesh;
 
         /// <summary>Currently held pickup.</summary>
         private IPickup pickup;
 
         [Tooltip("Force to apply to thrown objects. (Mass-dependant)")]
         [Range(500,5000)]
-        [SerializeField] private float throwForce = 2000f;
+        [SerializeField] private float throwForce = 200f;
+
+     
 
         private void Update()
         {
@@ -50,5 +58,18 @@ namespace TigerTail.FPSController
 
             this.pickup = pickup;
         }
+
+        //void OnCollisionEnter(Collision col)
+        //{
+        //    if (col.gameObject.tag == "Snowman")
+        //    {
+        //        //Destroy(col.gameObject);
+        //    }
+        //}
+
+    
+
+
+
     }
 }

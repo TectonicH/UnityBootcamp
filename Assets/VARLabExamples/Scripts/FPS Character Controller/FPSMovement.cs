@@ -14,6 +14,7 @@ using UnityEngine;
 
 namespace TigerTail.FPSController
 {
+   
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(CapsuleCollider))]
     [DisallowMultipleComponent]
@@ -22,6 +23,13 @@ namespace TigerTail.FPSController
         /// <summary>Rigidbody attached to this player object.</summary>
         private Rigidbody rb;
 
+        public AudioSource footsteps;
+
+        public AudioSource jumping;
+
+        public AudioSource landing;
+
+        public AudioSource wind;
         /// <summary>Capsule Collider attached to this player object.</summary>
         private CapsuleCollider cc;
 
@@ -68,6 +76,8 @@ namespace TigerTail.FPSController
 
         public Vector3 ExternalVelocity { get; set; }
 
+        
+
         /// <summary>Whether the player is sliding across a surface or not.</summary>
         /// <remarks>Set this to help the player slide down a slope or across an icy surface.</remarks>
         public bool IsSliding
@@ -80,6 +90,7 @@ namespace TigerTail.FPSController
         {
             cc = GetComponent<CapsuleCollider>();
             rb = GetComponent<Rigidbody>();
+            wind.Play();
         }
 
         private void Update()
@@ -141,12 +152,18 @@ namespace TigerTail.FPSController
         private Vector3 HandleJumping()
         {
             if (HasAnyState(State.Jumping | State.Falling | State.Knockback | State.Immobilized))
+            {
+                footsteps.Pause();
                 return Vector3.zero;
+            }
+               
 
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 ToggleState(State.Jumping, true);
                 lastJumpTime = Time.time;
+                footsteps.Pause();
+                jumping.Play();
                 return Vector3.up * jumpForce;
             }
 
@@ -161,19 +178,27 @@ namespace TigerTail.FPSController
             if (Input.GetKey(KeyCode.W))
             {
                 moveVelocity += transform.forward;
+                if (!footsteps.isPlaying)
+                    footsteps.Play();
             }
             else if (Input.GetKey(KeyCode.S))
             {
                 moveVelocity -= transform.forward;
+                if (!footsteps.isPlaying)
+                    footsteps.Play();
             }
 
             if (Input.GetKey(KeyCode.A))
             {
                 moveVelocity -= transform.right;
+                if (!footsteps.isPlaying)
+                    footsteps.Play();
             }
             else if (Input.GetKey(KeyCode.D))
             {
                 moveVelocity += transform.right;
+                if (!footsteps.isPlaying)
+                    footsteps.Play();
             }
 
             if (HasAnyState(State.Immobilized))
@@ -193,6 +218,7 @@ namespace TigerTail.FPSController
         {
             state |= State.Knockback;
             rb.AddForce(knockbackVelocity);
+            
         }
 
         /// <summary>Sets a state flag based on whether or not it should be <paramref name="active"/>.</summary>
